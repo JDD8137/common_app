@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   static String tag = "login-page";
@@ -8,6 +11,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future<FirebaseUser> _handleSignIn() async {
+    var email = emailController.text;
+    var password = passwordController.text;
+    FirebaseUser user = await _auth.signInWithEmailAndPassword(email: email, password: password);
+    return user;
+  }
   @override
   Widget build(BuildContext context) {
 
@@ -23,23 +37,23 @@ class _LoginPageState extends State<LoginPage> {
     final email = TextFormField(
       keyboardType: TextInputType.emailAddress,
       autofocus: false,
-      initialValue: "email@provider.com",
       decoration: InputDecoration(
         hintText: "Email",
         contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
       ),
+      controller: emailController
     );
 
     final password = TextFormField(
       autofocus: false,
-      initialValue: 'some password',
       obscureText: true,
       decoration: InputDecoration(
         hintText: 'Password',
         contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
       ),
+      controller: passwordController
     );
 
     final loginButton = Padding(
@@ -52,7 +66,12 @@ class _LoginPageState extends State<LoginPage> {
           minWidth: 200.0,
           height: 42.0,
           onPressed: () {
-            Navigator.of(context).pushNamed(HomePage.tag);
+            _handleSignIn()
+                .then((FirebaseUser user) {
+                  print(user);
+                  Navigator.of(context).pushNamed(HomePage.tag);
+                })
+                .catchError((e) => print(e));
           },
           color: Colors.lightBlueAccent,
           child: Text('Log In', style: TextStyle(color: Colors.white)),

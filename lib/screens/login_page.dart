@@ -47,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       final result = await facebookLogin.logInWithReadPermissions(['email']);
       switch (result.status) {
         case FacebookLoginStatus.loggedIn:
+          await FirebaseAuth.instance.signInWithFacebook(accessToken: result.accessToken.token);
           showLoggedInUI(result.accessToken.token);
           print(result.accessToken.token);
           break;
@@ -58,14 +59,24 @@ class _LoginPageState extends State<LoginPage> {
           break;
       }
     }
+    final title = new Text(
+      'Common Application',
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 32.0,
+        fontWeight: FontWeight.bold,
+      )
+    );
 
-    final logo = Hero(
-        tag: "hero",
-        child: CircleAvatar(
-          backgroundColor: Colors.transparent,
-          radius: 48.0,
-          child: Image.asset("assets/logo.png"),
-        )
+    Widget titleDesc = Container( 
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          new Text('Colleges and Universities', style: TextStyle(fontSize: 18.0)),
+          new Text('of the', style: TextStyle(fontSize: 18.0)),
+          new Text('Southern Cameroons', style: TextStyle(fontSize: 18.0))
+        ]
+      )
     );
 
     final email = TextFormField(
@@ -90,44 +101,111 @@ class _LoginPageState extends State<LoginPage> {
       controller: passwordController
     );
 
-    final loginButton = Padding(
-      padding: EdgeInsets.symmetric(vertical: 16.0),
-      child: Material(
-        borderRadius: BorderRadius.circular(30.0),
-        shadowColor: Colors.lightBlueAccent.shade100,
-        elevation: 5.0,
-        child: MaterialButton(
-          minWidth: 200.0,
-          height: 42.0,
-          onPressed: () {
-            _handleSignIn()
-                .then((FirebaseUser user) {
-                  print(user);
+    final loginAndCreateButtons = Padding(
+      padding: EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Material(
+              borderRadius: BorderRadius.circular(10.0),
+              shadowColor: Colors.lightBlueAccent.shade100,
+              elevation: 5.0,
+              child: MaterialButton(
+                height: 42.0,
+                onPressed: () {
+                  _handleSignIn()
+                      .then((FirebaseUser user) {
+                    print(user);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HomePage(name: user.email),
+                      ),
+                    );
+                  })
+                      .catchError((e) => print(e));
+                },
+                color: Colors.lightBlueAccent,
+                child: Text('Log In', style: TextStyle(color: Colors.white)),
+              ),
+            ),
+          ),
+          new Container(
+            width: 8.0,
+          ),
+          Expanded(
+            child: Material(
+              borderRadius: BorderRadius.circular(10.0),
+              shadowColor: Colors.lightBlueAccent.shade100,
+              elevation: 5.0,
+              child: MaterialButton(
+                height: 42.0,
+                onPressed: () {
+                  //create new account
                   Navigator.of(context).pushNamed(HomePage.tag);
-                })
-                .catchError((e) => print(e));
-          },
-          color: Colors.lightBlueAccent,
-          child: Text('Log In', style: TextStyle(color: Colors.white)),
-        ),
+                },
+                color: Colors.white,
+                child: Text('Sign up', style: TextStyle(color: Colors.black54)),
+              ),
+            ),
+          )
+        ],
+      )
+      // padding: EdgeInsets.symmetric(vertical: 16.0),
+    );
+
+
+    final googleFBSignInButtons = Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () {
+              // google auth
+              Navigator.of(context).pushNamed(HomePage.tag);
+            },
+            child: new Container(
+              padding: EdgeInsets.all(12.0),
+              child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                new SizedBox(
+                    width: 24.0,
+                    height: 24.0,
+                    child: Image.asset('graphics/googleLogo.png'),
+                  ),
+                  SizedBox(width: 5.0),
+                Text('Continue with Google', style: TextStyle(color: Colors.deepOrange))
+              ],
+            ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              // facebook auth
+              login();
+            },
+            child: new Container(
+              child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                new SizedBox(
+                    width: 24.0,
+                    height: 24.0,
+                    child: Image.asset('graphics/facebookLogo.png'),
+                  ),
+                  SizedBox(width: 5.0),
+                Text('Continue with Facebook', style: TextStyle(color: Colors.lightBlue.shade700))
+              ],
+            ),
+            ),
+          ),
+        ],
       ),
     );
 
-    final fbLoginButton = Padding(
-      padding: EdgeInsets.symmetric(vertical: 16.0),
-      child: Material(
-        borderRadius: BorderRadius.circular(30.0),
-        shadowColor: Colors.blueAccent.shade700,
-        elevation: 5.0,
-        child: MaterialButton(
-          minWidth: 200.0,
-          height: 42.0,
-          onPressed: login,
-          color: Colors.lightBlueAccent,
-          child: Text('Facebook Log In', style: TextStyle(color: Colors.white)),
-        ),
-      ),
-    );
 
     final forgotLabel = FlatButton(
       child: Text(
@@ -144,14 +222,20 @@ class _LoginPageState extends State<LoginPage> {
           shrinkWrap: true,
           padding: EdgeInsets.only(left: 24.0, right: 24.0),
           children: <Widget>[
-            logo,
-            SizedBox(height: 48.0),
+            SizedBox(height: 32.0),
+            title,
+            SizedBox(height: 5.0),
+            titleDesc,
+            SizedBox(height: 32.0),
             email,
             SizedBox(height: 8.0),
             password,
             SizedBox(height: 24.0),
-            loginButton,
-            fbLoginButton,
+            SizedBox(height: 14.0),
+            loginAndCreateButtons,
+            // googleSignInButton,
+            googleFBSignInButtons,
+            SizedBox(height: 32.0),
             forgotLabel
           ],
         ),

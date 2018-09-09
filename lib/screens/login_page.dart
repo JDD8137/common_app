@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'home_page.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 
 class LoginPage extends StatefulWidget {
   static String tag = "login-page";
@@ -10,6 +13,37 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
+
+    showLoggedInUI(token) async {
+      var graphResponse = await http.get(
+          'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email&access_token=${token}');
+      var profile = json.decode(graphResponse.body);
+      print(profile['name']);
+      //context.
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomePage(name: profile['name']),
+        ),
+      );
+    }
+
+    login() async {
+      final facebookLogin = new FacebookLogin();
+      final result = await facebookLogin.logInWithReadPermissions(['email']);
+      switch (result.status) {
+        case FacebookLoginStatus.loggedIn:
+          showLoggedInUI(result.accessToken.token);
+          print(result.accessToken.token);
+          break;
+        case FacebookLoginStatus.cancelledByUser:
+          print('CANCELED BY USER');
+          break;
+        case FacebookLoginStatus.error:
+          print(result.errorMessage);
+          break;
+      }
+    }
 
     final logo = Hero(
         tag: "hero",
@@ -60,6 +94,22 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
+    final fbLoginButton = Padding(
+      padding: EdgeInsets.symmetric(vertical: 16.0),
+      child: Material(
+        borderRadius: BorderRadius.circular(30.0),
+        shadowColor: Colors.blueAccent.shade700,
+        elevation: 5.0,
+        child: MaterialButton(
+          minWidth: 200.0,
+          height: 42.0,
+          onPressed: login,
+          color: Colors.lightBlueAccent,
+          child: Text('Facebook Log In', style: TextStyle(color: Colors.white)),
+        ),
+      ),
+    );
+
     final forgotLabel = FlatButton(
       child: Text(
         'Forgot password?',
@@ -82,6 +132,7 @@ class _LoginPageState extends State<LoginPage> {
             password,
             SizedBox(height: 24.0),
             loginButton,
+            fbLoginButton,
             forgotLabel
           ],
         ),
